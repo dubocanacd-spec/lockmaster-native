@@ -5,10 +5,11 @@ import MapScreen from './screens/MapScreen';
 import UrgentScreen from './screens/UrgentScreen';
 import PlannerScreen from './screens/PlannerScreen';
 import IdrisChat from './screens/IdrisChat';
-import PubsScreen from './screens/PubsScreen';
 
 
-
+function PubsScreen() {
+  return <View style={styles.screen}><Text style={styles.screenTitle}>🍺 Pubs</Text><Text style={styles.screenSub}>Canalside pubs</Text></View>;
+}
 
 
 

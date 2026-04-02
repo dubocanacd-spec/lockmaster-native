@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from './colors';
 import MapScreen from './screens/MapScreen';
 import UrgentScreen from './screens/UrgentScreen';
 import PlannerScreen from './screens/PlannerScreen';
 import IdrisChat from './screens/IdrisChat';
+import LocksScreen from './screens/LocksScreen';
 import PubsScreen from './screens/PubsScreen';
 
 
@@ -15,6 +17,7 @@ import PubsScreen from './screens/PubsScreen';
 const TABS = [
   { key: 'map',     label: 'Map',     icon: '🗺️',  screen: MapScreen },
   { key: 'locks',   label: 'Idris',   icon: '👮',  screen: IdrisChat },
+  { key: 'lockList', label: 'Locks',   icon: '🔒',  screen: LocksScreen },
   { key: 'pubs',    label: 'Pubs',    icon: '🍺',  screen: PubsScreen },
   { key: 'planner', label: 'Planner', icon: '📍',  screen: PlannerScreen },
   { key: 'urgent',  label: 'Urgent',  icon: '🚨',  screen: UrgentScreen },
@@ -24,7 +27,8 @@ type TabKey = typeof TABS[number]['key'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('map');
-  const ActiveScreen = TABS.find(t => t.key === activeTab)!.screen;
+  const [safeRoute, setSafeRoute] = useState<any>(null);
+  const ActiveScreen = TABS.find(t => t.key === activeTab)!.screen as any;
 
   return (
     <SafeAreaView style={styles.root}>

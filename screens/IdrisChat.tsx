@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { COLORS } from '../colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE = 'https://lockmasterai.co.uk';
 
@@ -17,14 +18,29 @@ const QUICK_QUESTIONS = [
 ];
 
 export default function IdrisChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'idris', text: "Good moaning! I am Idris, your canol navigation assistant. How can I help you navigate the witterways today, you plonker?" }
-  ]);
+  const STORAGE_KEY = 'idris_chat_history';
+  const INITIAL_MSG: Message = { role: 'idris', text: "Good moaning! I am Idris, your canol navigation assistant. How can I help you navigate the witterways today, you plonker?" };
+
+  const [messages, setMessages] = useState<Message[]>([INITIAL_MSG]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
+  // Load chat history on mount
   useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then(stored => {
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) setMessages(parsed);
+        } catch {}
+      }
+    });
+  }, []);
+
+  // Save chat history on every change
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }, [messages]);
 
@@ -63,6 +79,12 @@ export default function IdrisChat() {
           <Text style={styles.headerSub}>Canal Navigation Officer</Text>
         </View>
         <View style={styles.onlineDot} />
+        <TouchableOpacity
+          onPress={() => { setMessages([INITIAL_MSG]); AsyncStorage.removeItem(STORAGE_KEY); }}
+          style={styles.clearBtn}
+        >
+          <Text style={styles.clearText}>🗑️</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Messages */}
@@ -153,4 +175,6 @@ const styles = StyleSheet.create({
   sendBtn:          { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.orange, alignItems: 'center', justifyContent: 'center' },
   sendBtnDisabled:  { opacity: 0.4 },
   sendIcon:         { color: COLORS.white, fontSize: 16 },
+  clearBtn:         { padding: 6 },
+  clearText:        { fontSize: 16 },
 });

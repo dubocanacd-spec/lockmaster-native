@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Animated, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Animated, ScrollView, ActivityIndicator } from 'react-native';
+import * as Location from 'expo-location';
 import { COLORS } from '../colors';
 
 const EMERGENCY_CONTACTS = [
@@ -18,9 +19,11 @@ const FLOOD_TIPS = [
   '🧰 Grab emergency kit & life jackets',
 ];
 
-export default function UrgentScreen() {
+export default function UrgentScreen({ setActiveTab, setSafeRoute }: { setActiveTab?: (tab: string) => void, setSafeRoute?: (route: any) => void }) {
   const [sosActive, setSosActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
+  const [safeHaven, setSafeHaven] = useState<any>(null);
+  const [loadingSafe, setLoadingSafe] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -51,7 +54,35 @@ export default function UrgentScreen() {
       if (countdownRef.current) clearInterval(countdownRef.current);
       setCountdown(10);
     }
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+    async function findSafeHaven() {
+    setLoadingSafe(true);
+    setSafeHaven(null);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      let lat = 51.7512, lon = -1.2678; // Default Isis Lock
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        lat = loc.coords.latitude;
+        lon = loc.coords.longitude;
+      }
+      const r = await fetch(`https://lockmasterai.co.uk/safe_haven?lat=${lat}&lon=${lon}`);
+      const data = await r.json();
+      if (data.found) setSafeHaven(data);
+      else setSafeHaven({ error: 'No safe haven found nearby' });
+    } catch (e) {
+      setSafeHaven({ error: 'Connection failed' });
+    } finally {
+      setLoadingSafe(false);
+    }
+  }
+
+  function openSafeHavenOnMap() {
+    if (!safeHaven) return;
+    if (setSafeRoute) setSafeRoute(safeHaven);
+    if (setActiveTab) setActiveTab('map');
+  }
+
+  return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, [sosActive]);
 
   function triggerSOS() {
@@ -61,6 +92,34 @@ export default function UrgentScreen() {
 
   function call(number: string) {
     Linking.openURL(`tel:${number}`);
+  }
+
+  async function findSafeHaven() {
+    setLoadingSafe(true);
+    setSafeHaven(null);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      let lat = 51.7512, lon = -1.2678; // Default Isis Lock
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        lat = loc.coords.latitude;
+        lon = loc.coords.longitude;
+      }
+      const r = await fetch(`https://lockmasterai.co.uk/safe_haven?lat=${lat}&lon=${lon}`);
+      const data = await r.json();
+      if (data.found) setSafeHaven(data);
+      else setSafeHaven({ error: 'No safe haven found nearby' });
+    } catch (e) {
+      setSafeHaven({ error: 'Connection failed' });
+    } finally {
+      setLoadingSafe(false);
+    }
+  }
+
+  function openSafeHavenOnMap() {
+    if (!safeHaven) return;
+    if (setSafeRoute) setSafeRoute(safeHaven);
+    if (setActiveTab) setActiveTab('map');
   }
 
   return (
@@ -94,6 +153,33 @@ export default function UrgentScreen() {
           )}
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Safe Haven */}
+      <TouchableOpacity
+        style={[styles.safeHavenBtn, loadingSafe && { opacity: 0.6 }]}
+        onPress={findSafeHaven}
+        disabled={loadingSafe}
+      >
+        {loadingSafe ? (
+          <ActivityIndicator color={COLORS.white} />
+        ) : (
+          <Text style={styles.safeHavenText}>🏔️ FIND SAFE HAVEN</Text>
+        )}
+      </TouchableOpacity>
+
+      {safeHaven && !safeHaven.error && (
+        <TouchableOpacity style={styles.safeHavenResult} onPress={openSafeHavenOnMap}>
+          <Text style={styles.safeHavenResultTitle}>✅ {safeHaven.type || 'Safe Haven'}</Text>
+          <Text style={styles.safeHavenResultDist}>📍 {safeHaven.distance_km?.toFixed(2)}km · {safeHaven.eta_minutes} min</Text>
+          <Text style={styles.safeHavenResultSub}>Tap to show on Lockmaster map →</Text>
+        </TouchableOpacity>
+      )}
+
+      {safeHaven?.error && (
+        <View style={styles.safeHavenError}>
+          <Text style={styles.safeHavenErrorText}>⚠️ {safeHaven.error}</Text>
+        </View>
+      )}
 
       {/* Flood Tips */}
       <View style={styles.section}>
@@ -155,6 +241,15 @@ const styles = StyleSheet.create({
   contactLabel:{ color: COLORS.white, fontSize: 14, fontWeight: '600' },
   contactNumber:{ color: COLORS.muted, fontSize: 12, marginTop: 2 },
   callBtn:     { color: COLORS.red, fontWeight: '800', fontSize: 13, letterSpacing: 1 },
+
+  safeHavenBtn:        { backgroundColor: '#1a3a1a', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: COLORS.green },
+  safeHavenText:       { color: COLORS.green, fontWeight: '800', fontSize: 14, letterSpacing: 0.5 },
+  safeHavenResult:     { backgroundColor: 'rgba(76,175,80,0.1)', borderRadius: 10, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: COLORS.green },
+  safeHavenResultTitle:{ color: COLORS.white, fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  safeHavenResultDist: { color: COLORS.green, fontSize: 13, marginBottom: 4 },
+  safeHavenResultSub:  { color: COLORS.muted, fontSize: 11 },
+  safeHavenError:      { backgroundColor: 'rgba(230,57,70,0.1)', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: COLORS.red },
+  safeHavenErrorText:  { color: COLORS.red, fontSize: 13 },
 
   disclaimer:  { color: 'rgba(255,255,255,0.25)', fontSize: 10, textAlign: 'center', marginTop: 30, lineHeight: 16 },
 });

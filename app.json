@@ -1,40 +1,40 @@
 {
   "expo": {
-    "name": "lockmaster-native",
+    "name": "Lockmaster AI",
     "slug": "lockmaster-native",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#2B2D42"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dubiduman.lockmasternative"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#2B2D42"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
       "package": "com.dubiduman.lockmasternative"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "plugins": [
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Lockmaster AI needs location for canal navigation and safety alerts."
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "472ba920-0968-4b88-bf43-aa3018571772"
       }
-    },
-    "owner": "dubiduman"
+    }
   }
 }
